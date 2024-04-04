@@ -103,18 +103,37 @@ begin
         w_reset <= '1';  wait for k_clk_period;
             assert w_floor = "0010" report "bad reset" severity failure; 
         -- clear reset
-		
+		w_reset <= '0';
 		-- active UP signal
-		w_up_down <= '1'; 
+		w_up_down <= '1'; w_stop <= '0';
 		
 		-- stay on each o_floor for 2 cycles and then move up to the next o_floor
         w_stop <= '1';  wait for k_clk_period * 2;
             assert w_floor = "0010" report "bad wait on floor2" severity failure;
         w_stop <= '0';  wait for k_clk_period;
             assert w_floor = "0011" report "bad up from floor2" severity failure;
-		-- rest of cases
-        
+		-- up to third floor
+        w_stop <= '1';  wait for k_clk_period * 2;
+            assert w_floor = "0011" report "bad wait on floor3" severity failure;
+        w_stop <= '0';  wait for k_clk_period;
+            assert w_floor = "0100" report "bad up from floor3" severity failure;
+        -- up from fourth floor
+        w_stop <= '1';  wait for k_clk_period * 2;
+            assert w_floor = "0100" report "bad wait on floor4" severity failure;
+        w_stop <= '0';  wait for k_clk_period * 4;
+            assert w_floor = "0100" report "bad upper limit on floor4" severity failure;
         -- go back DOWN
+        w_up_down <= '0'; w_stop <= '0'; wait for k_clk_period;
+        -- down from fourth floor stop on third floor
+        w_stop <= '1';  wait for k_clk_period * 2;
+            assert w_floor = "0011" report "bad wait on floor3" severity failure;
+        -- go down and make sure the second floor is passed, then stops indefinitely at first floor
+        w_stop <= '0';  wait for k_clk_period;
+            assert w_floor = "0010" report "bad down to floor2" severity failure;
+        wait for k_clk_period;
+            assert w_floor = "0001" report "bad down to floor1" severity failure;
+        wait for k_clk_period * 3;
+            assert w_floor = "0001" report "bad lower limit on floor1" severity failure;
           
 		  	
 		wait; -- wait forever
